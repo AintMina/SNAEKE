@@ -12,4 +12,8 @@ namespace Colors {
     const sf::Color snake2_color = sf::Color(0, 255, 255, 200);
     const sf::Color border = sf::Color(255, 0, 0, 100);
     const sf::Color food = sf::Color(0, 255, 0, 100);
+    const sf::Color genome_background = sf::Color(20, 20, 20, 255);
+    const sf::Color node_in_color = sf::Color(180, 180, 180, 255);
+    const sf::Color node_out_color = sf::Color(100, 100, 100, 255);
+    const sf::Color link_color = sf::Color(0, 255, 0, 255);
 }

@@ -1,0 +1,66 @@
+#include "neuron.hpp"
+#include <cmath>
+// Default constructor for Neuron class
+Neuron::Neuron() : id(0), bias(0.0), value(0.0) {
+    for (int i = 0; i < 32; ++i) {
+        in[i] = nullptr;
+        out[i] = nullptr;
+    }
+}
+
+// Parameterized constructor for Neuron class
+Neuron::Neuron(int id, double bias) : id(id), bias(bias), value(0.0) {
+    for (int i = 0; i < 32; ++i) {
+        in[i] = nullptr;
+        out[i] = nullptr;
+    }
+}
+
+// Another parameterized constructor for Neuron class
+Neuron::Neuron(int id, Link* in[32], Link* out[32], double bias) : id(id), bias(bias), value(0.0) {
+    for (int i = 0; i < 32; ++i) {
+        this->in[i] = in[i];
+        this->out[i] = out[i];
+    }
+}
+
+// Adds an incoming link to the neuron
+void Neuron::add_link_in(Link* link) {
+    for (int i = 0; i < 32; ++i) {
+        if (in[i] == nullptr) {
+            in[i] = link;
+            break;
+        }
+    }
+}
+
+// Adds an outgoing link to the neuron
+void Neuron::add_link_out(Link* link) {
+    for (int i = 0; i < 32; ++i) {
+        if (out[i] == nullptr) {
+            out[i] = link;
+            break;
+        }
+    }
+}
+
+// Activation function (sigmoid)
+double Neuron::activation(double input) {
+    return 1.0 / (1.0 + std::exp(-input));
+}
+
+// Calculates the value of the neuron by summing the input values and applying the activation function
+void Neuron::calculate_value() {
+    double sum = 0.0;
+    for (int i = 0; i < 32; ++i) {
+        if (in[i] != nullptr) {
+            sum += in[i]->get_value();
+        }
+    }
+    value = activation(sum + bias);
+}
+
+// Returns the value of the neuron
+double Neuron::get_value() {
+    return value;
+}

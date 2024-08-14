@@ -37,7 +37,7 @@ void drawParameter(std::vector<sf::RectangleShape> *grid, int rows, int cols) {
 
 
 void randomPoint(std::vector<sf::RectangleShape> *grid) {
-    int randomX = food_rng(generator);
-    int randomY = food_rng(generator);
+    int randomX = get_food_rng();
+    int randomY = get_food_rng();
     (*grid)[(randomX) + (randomY * ROWS)].setFillColor(Colors::food);
 }

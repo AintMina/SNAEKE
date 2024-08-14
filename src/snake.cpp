@@ -2,6 +2,7 @@
 #include "colors.hpp"
 #include "settings.hpp"
 #include "gfx.hpp"
+#include "random.hpp"
 
 
 Snake::Snake(float x, float y, float cell_size, sf::Color color, int dir) {
@@ -88,6 +89,8 @@ int Snake::move_snake(std::vector<sf::RectangleShape> *grid) {
         return -1;
     }
 
+    this->age++;
+
     sf::Vector2f offset(0, 0);
     int coord_offset[2] = {0, 0};
 
@@ -116,9 +119,9 @@ int Snake::move_snake(std::vector<sf::RectangleShape> *grid) {
         this->color.a = 120;
         return -1;
     }
-    else if (next_cell == Colors::food) {
+    else if (this->head_coords[0] + coord_offset[0] == this->food[0] && this->head_coords[1] + coord_offset[1] == this->food[1]) {
         this->grow();
-        randomPoint(grid);
+        this->generate_food();
     }
 
     for (int i = 0; i < this->length; i++) {
@@ -159,6 +162,15 @@ void Snake::draw_snake(sf::RenderWindow *window) {
         this->body[i].setFillColor(this->color);
         window->draw(this->body[i]);
     }
+
+    this->draw_food(window);
+}
+
+void Snake::draw_food(sf::RenderWindow *window) {
+    sf::RectangleShape food(sf::Vector2f(this->cell_size, this->cell_size));
+    food.setPosition(this->food[0] * this->cell_size, this->food[1] * this->cell_size);
+    food.setFillColor(Colors::food); // Default color
+    window->draw(food);
 }
 
  void Snake::turn(float x, float y) {
@@ -174,6 +186,18 @@ void Snake::draw_snake(sf::RenderWindow *window) {
         }
         else if (y > 50 && this->dir != 90) {
             this->dir = 270;
+        }
+        this->turning_flag = 1;
+    }
+}
+
+ void Snake::turn(float x) {
+    if (!this->turning_flag) {
+        if (x < -50) {
+            this->dir -= 90;
+        }
+        else if (x > 50) {
+            this->dir += 90;
         }
         this->turning_flag = 1;
     }
@@ -194,3 +218,202 @@ void Snake::grow() {
 sf::Color Snake::get_next_cell(std::vector<sf::RectangleShape> *grid, int offset[2]) {
     return (*grid)[((this->head_coords[1] + offset[1]) * COLS) + (this->head_coords[0] + offset[0])].getFillColor();
 }
+
+
+void Snake::look(std::vector<sf::RectangleShape> *grid) {
+    
+    this->bad.forward = 0;
+    this->bad.left = 0;
+    this->bad.right = 0;
+    this->good.forward = 0;
+    this->good.left = 0;
+    this->good.right = 0;
+
+    uint8_t found_good = 0;
+    uint8_t found_bad = 0;
+
+    // Forward
+    for (int i = 1; i <= COLS; i++) {
+
+        uint8_t x = 0;
+        uint8_t y = 0;
+
+        if (this->dir == 0) {
+            x += i;
+        }
+        else if (this->dir == 90) {
+            y += i;
+        }
+        else if (this->dir == 180) {
+            x -= i;
+        }
+        else if (this->dir == 270) {
+            y -= i;
+        }
+
+        x += this->head_coords[0];
+        y += this->head_coords[1];
+
+        for (int ii = 0; ii < this->length; ii++) {
+            if (this->body[ii].getPosition().x == (x * this->cell_size) && this->body[ii].getPosition().y == (y * this->cell_size)) {
+                found_bad = 1;
+                break;
+            }
+        }
+
+        sf::Color color = (*grid)[x + (y * COLS)].getFillColor();
+
+        if (x == this->food[0] && y == this->food[1]) {
+            found_good = 1;
+        }
+        else if (color == Colors::border) {
+            found_bad = 1;
+        }
+        if (color == Colors::background) {
+            if (!found_bad) {
+                this->bad.forward++;
+            }
+            if (!found_good) {
+                this->good.forward++;
+            }
+        }
+
+        if (found_bad && !found_good) {
+            this->good.forward = 255;
+            break;
+        }
+        else if (!found_bad && found_good) {
+            this->bad.forward = 255;
+            break;
+        }
+    }
+    found_good = 0;
+    found_bad = 0;
+
+    // Left
+    for (int i = 1; i <= COLS; i++) {
+
+        uint8_t x = 0;
+        uint8_t y = 0;
+
+        if (this->dir == 0) {
+            y += i;
+        }
+        else if (this->dir == 90) {
+            x -= i;
+        }
+        else if (this->dir == 180) {
+            y -= i;
+        }
+        else if (this->dir == 270) {
+            x += i;
+        }
+
+        x += this->head_coords[0];
+        y += this->head_coords[1];
+
+        for (int ii = 0; ii < this->length; ii++) {
+            if (this->body[ii].getPosition().x == (x * this->cell_size) && this->body[ii].getPosition().y == (y * this->cell_size)) {
+                found_bad = 1;
+                break;
+            }
+        }
+
+        sf::Color color = (*grid)[x + (y * COLS)].getFillColor();
+
+        if (x == this->food[0] && y == this->food[1]) {
+            found_good = 1;
+        }
+        else if (color == Colors::border) {
+            found_bad = 1;
+        }
+        if (color == Colors::background) {
+            if (!found_bad) {
+                this->bad.left++;
+            }
+            if (!found_good) {
+                this->good.left++;
+            }
+        }
+
+        if (found_bad && !found_good) {
+            this->good.left = 255;
+            break;
+        }
+        else if (!found_bad && found_good) {
+            this->bad.left = 255;
+            break;
+        }
+    }
+    found_good = 0;
+    found_bad = 0;
+
+    // Right
+    for (int i = 1; i <= COLS; i++) {
+
+        uint8_t x = 0;
+        uint8_t y = 0;
+
+        if (this->dir == 0) {
+            y -= i;
+        }
+        else if (this->dir == 90) {
+            x += i;
+        }
+        else if (this->dir == 180) {
+            y += i;
+        }
+        else if (this->dir == 270) {
+            x -= i;
+        }
+
+        x += this->head_coords[0];
+        y += this->head_coords[1];
+
+        for (int ii = 0; ii < this->length; ii++) {
+            if (this->body[ii].getPosition().x == (x * this->cell_size) && this->body[ii].getPosition().y == (y * this->cell_size)) {
+                found_bad = 1;
+                break;
+            }
+        }
+
+        sf::Color color = (*grid)[x + (y * COLS)].getFillColor();
+
+        if (x == this->food[0] && y == this->food[1]) {
+            found_good = 1;
+        }
+        else if (color == Colors::border) {
+            found_bad = 1;
+        }
+        else if (color == Colors::background) {
+            if (!found_bad) {
+                this->bad.right++;
+            }
+            if (!found_good) {
+                this->good.right++;
+            }
+        }
+
+        if (found_bad && !found_good) {
+            this->good.right = 255;
+            break;
+        }
+        else if (!found_bad && found_good) {
+            this->bad.right = 255;
+            break;
+        }
+    }
+}
+
+uint8_t Snake::is_alive() {
+    return this->alive;
+}
+
+void Snake::generate_food() {
+    int x = get_food_rng();
+    int y = get_food_rng();
+
+    this->food[0] = x;
+    this->food[1] = y;
+}
+

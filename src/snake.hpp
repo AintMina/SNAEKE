@@ -5,6 +5,13 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 
+
+struct Vision {
+    uint8_t forward;
+    uint8_t left;
+    uint8_t right;
+};
+
 class Snake {
 
 private:
@@ -20,15 +27,25 @@ private:
     uint8_t turning_flag = 0;
     uint8_t alive = 1;
     sf::Color color;
+    int food[2] = {0, 0};
+    int age = 0;
 
 public:
+    struct Vision good;
+    struct Vision bad;
+
     Snake(float x, float y, float cell_size, sf::Color color, int dir);
 
     void reset(float x, float y, float cell_size, sf::Color color, int dir);
     int move_snake(std::vector<sf::RectangleShape> *grid);
     void draw_snake(sf::RenderWindow *window);
+    void draw_food(sf::RenderWindow *window);
     void turn(float x, float y);
+    void turn(float x);
     void grow();
     sf::Color get_next_cell(std::vector<sf::RectangleShape> *grid, int offset[2]);
+    void look(std::vector<sf::RectangleShape> *grid);
+    uint8_t is_alive();
+    void generate_food();
 
 };

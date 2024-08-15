@@ -15,6 +15,7 @@
 #define OUTPUT_COUNT 3
 #define MAX_HIDDEN_LAYERS 8
 #define MAX_HIDDEN_NODES 10
+#define MIN_LINKS INPUT_COUNT + OUTPUT_COUNT
 
 
 class Genome {
@@ -43,7 +44,10 @@ public:
     void modify_weight();
     void modify_bias();
     void add_neuron();
+    void add_links(int index);
     void add_link();
+
+    void mutate();
 
     void draw_neurons(std::vector<sf::CircleShape> *circles);
     void draw_links(std::vector<sf::VertexArray> *line);

@@ -19,7 +19,7 @@ public:
     double value = 0.0;
     bool calculated = false;
     
-    Link(int id, int in, int out, double weigth);
+    Link(int in, int out, double weigth);
 
     void enable();
     void disable();
@@ -34,7 +34,7 @@ public:
     int get_out();
     void set_out(int out);
 
-    void calculate_value(std::vector<Link>& links, std::vector<Neuron>& neurons);
-    double get_value(std::vector<Link>& links, std::vector<Neuron>& neurons);
+    void calculate_value(std::vector<Link> links, std::vector<Neuron> neurons);
+    double get_value(std::vector<Link> links, std::vector<Neuron> neurons);
 
 };

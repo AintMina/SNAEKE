@@ -3,8 +3,11 @@
 #include "genome.hpp"
 
 
-Link::Link(int id, int in, int out, double weigth) {
-    this->id = id;
+bool compare_by_layer(Neuron &a, Neuron &b);
+
+
+Link::Link(int in, int out, double weigth) {
+    this->id = (in * (MAX_HIDDEN_LAYERS * MAX_HIDDEN_NODES)) + out;
     this->in_id = in;
     this->out_id = out;
     this->weigth = weigth;
@@ -61,7 +64,7 @@ void Link::set_out(int out) {
 }
 
 // Calculates the value of the link by multiplying the input value by the weight
-void Link::calculate_value(std::vector<Link>& links, std::vector<Neuron>& neurons) {
+void Link::calculate_value(std::vector<Link> links, std::vector<Neuron> neurons) {
     if (this->enabled) {
         for (int i = 0; i < neurons.size(); i++) {
             if (this->in_id == neurons[i].get_id()) {
@@ -76,7 +79,7 @@ void Link::calculate_value(std::vector<Link>& links, std::vector<Neuron>& neuron
 }
 
 // Returns the value of the link
-double Link::get_value(std::vector<Link>& links, std::vector<Neuron>& neurons) {
+double Link::get_value(std::vector<Link> links, std::vector<Neuron> neurons) {
     if (this->calculated) {
         return this->value;
     }
@@ -85,4 +88,11 @@ double Link::get_value(std::vector<Link>& links, std::vector<Neuron>& neurons) {
     }
 
     return this->value;
+}
+
+
+
+// Define the comparison function
+bool compare_by_layer(Neuron &a, Neuron &b) {
+    return a.get_layer() < b.get_layer();
 }

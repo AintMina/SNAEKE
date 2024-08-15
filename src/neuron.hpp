@@ -11,9 +11,11 @@ class Link;
 class Neuron {
 private:
     int id;
-    std::vector<int> in;
-    std::vector<int> out;
     double bias;
+    std::vector<int> in;
+    int in_count = 0;
+    std::vector<int> out;
+    int out_count = 0;
     int layer = 0;
 
 public:
@@ -35,13 +37,15 @@ public:
 
     std::vector<int> get_in() const;
     void set_in(int in_id);
+    void remove_in(int index);
     std::vector<int> get_out() const;
     void set_out(int out_id);
+    void remove_out(int index);
 
     double activation(double in) const;
-    void calculate_value(std::vector<Link>& links, std::vector<Neuron>& neurons);
+    void calculate_value(std::vector<Link> links, std::vector<Neuron> neurons);
     void set_value(double value);
-    double get_value(std::vector<Link>& links, std::vector<Neuron>& neurons);
+    double get_value(std::vector<Link> links, std::vector<Neuron> neurons);
     void set_layer(int layer);
     int get_layer();
 

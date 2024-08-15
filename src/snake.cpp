@@ -47,6 +47,7 @@ void Snake::reset(float x, float y, float cell_size, sf::Color color, int dir) {
     this->body.clear();
     this->length = 3;
     this->alive = 1;
+    this->age = 0;
     this->color = color;
     this->cell_size = cell_size;
     this->head_coords[0] = x;
@@ -417,3 +418,6 @@ void Snake::generate_food() {
     this->food[1] = y;
 }
 
+int Snake::get_age() {
+    return this->age;
+}

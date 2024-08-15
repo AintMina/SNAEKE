@@ -23,9 +23,11 @@ Neuron::Neuron(int id, const std::vector<int>& in, const std::vector<int>& out, 
     this->bias = bias;
     for (int i = 0; i < in.size(); i++) {
         this->in.push_back(in[i]);
+        this->in_count++;
     }
     for (int i = 0; i < out.size(); i++) {
         this->out.push_back(out[i]);
+        this->out_count++;
     }
 
     int id_tmp = id;
@@ -41,10 +43,12 @@ Neuron::Neuron(int id, const std::vector<int>& in, const std::vector<int>& out, 
 
 void Neuron::add_link_in(int in) {
     this->in.push_back(in);
+    this->in_count++;
 }
 
 void Neuron::add_link_out(int out) {
     this->out.push_back(out);
+    this->out_count++;
 }
 
 int Neuron::get_id() const {
@@ -67,27 +71,33 @@ std::vector<int> Neuron::get_in() const {
     return this->in;
 }
 
-void Neuron::set_in(int in_id) {
-    this->in.push_back(in_id);
+void Neuron::remove_in(int index) {
+    std::vector<int>::iterator it = this->in.begin();
+    std::advance(it, index);
+    this->in.erase(it);
+    this->in_count--;
 }
 
 std::vector<int> Neuron::get_out() const {
     return this->out;
 }
 
-void Neuron::set_out(int out_id) {
-    this->out.push_back(out_id);
+void Neuron::remove_out(int index) {
+    std::vector<int>::iterator it = this->out.begin();
+    std::advance(it, index);
+    this->out.erase(it);
+    this->out_count--;
 }
 
 double Neuron::activation(double in) const {
     return (2.0 / (1.0 + std::exp(-in))) - 1.0;  // Sigmoid function
 }
 
-void Neuron::calculate_value(std::vector<Link>& links, std::vector<Neuron>& neurons) {
+void Neuron::calculate_value(std::vector<Link> links, std::vector<Neuron> neurons) {
     if (!this->calculated) {
         double sum = static_cast<double>(this->bias);
-
-        for (int link = 0; link < this->in.size(); link++) {
+        
+        for (int link = 0; link < this->in_count; link++) {
             for (int i = 0; i < links.size(); i++) {
                 if (this->in[link] == links[i].get_id()) {
                     sum += links[i].get_value(links, neurons);
@@ -105,7 +115,7 @@ void Neuron::set_value(double value) {
     this->calculated = true;
 }
 
-double Neuron::get_value(std::vector<Link>& links, std::vector<Neuron>& neurons) {
+double Neuron::get_value(std::vector<Link> links, std::vector<Neuron> neurons) {
     if (this->calculated) {
         return this->value;
     }

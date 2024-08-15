@@ -110,10 +110,21 @@ int main() {
                 genome_window.close();
             }
             if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::Space) {
-                    // gene.clear();
-                    // gene.populate();
+                if (event.key.code == sf::Keyboard::Numpad0) {
                     gene.delete_neuron();
+                }
+                else if (event.key.code == sf::Keyboard::Numpad1) {
+                    gene.delete_link();
+                }
+                else if (event.key.code == sf::Keyboard::Numpad2) {
+                    gene.add_link();
+                    // gene.add_neuron();
+                }
+                else if (event.key.code == sf::Keyboard::Numpad3) {
+                    gene.modify_weight();
+                }
+                else if (event.key.code == sf::Keyboard::Numpad4) {
+                    gene.modify_bias();
                 }
                 else if (event.key.code == sf::Keyboard::Escape) {
                     for (int i = 0; i < PLAYER_NUM; i++) {
@@ -198,9 +209,11 @@ int main() {
                 }
             }
             else {
+                std::cout << players[0].get_age() << std::endl;
                 players[0].reset(starting_points[0][0], starting_points[0][1], CELLSIZE, snake_colors[0], dirs[0]);
-                gene.clear();
-                gene.populate();
+                // gene.clear();
+                // gene.populate();
+                gene.mutate();
             }
         }
 

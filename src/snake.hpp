@@ -47,5 +47,6 @@ public:
     void look(std::vector<sf::RectangleShape> *grid);
     uint8_t is_alive();
     void generate_food();
+    int get_age();
 
 };

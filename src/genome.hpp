@@ -4,12 +4,13 @@
 
 #include <SFML/Graphics.hpp>
 #include "neuron.hpp"
+#include "link.hpp"
 
 
-#define NEURON_RADIUS 20
+#define NEURON_RADIUS 10
 #define NEURON_SPACING 70
-#define NEURON_WIDTH 1500
-#define NEURON_HEIGHT 600
+#define NEURON_WIDTH 750
+#define NEURON_HEIGHT 300
 
 #define INPUT_COUNT 6
 #define OUTPUT_COUNT 3
@@ -25,6 +26,7 @@ private:
     std::vector<Link> links;
 
 public:
+    Genome();
     Genome(int id);
     Genome(int id, const std::vector<Neuron> neurons);
     Genome(int id, const std::vector<Neuron> neurons, const std::vector<Link> links);
@@ -52,10 +54,4 @@ public:
     void draw_neurons(std::vector<sf::CircleShape> *circles);
     void draw_links(std::vector<sf::VertexArray> *line);
 
-};
-
-
-struct Individuals {
-    Genome genome;
-    double fitness = 0.0;
 };

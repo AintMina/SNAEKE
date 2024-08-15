@@ -13,8 +13,23 @@
 #include "link.hpp"
 #include "neuron.hpp"
 #include "genome.hpp"
+#include "specimen.hpp"
 
 int main() {
+    
+    sf::Font font;
+    if (!font.loadFromFile("/usr/share/fonts/TTF/Hack-Bold.ttf")) {
+        return -1;
+    }
+
+    // Create a text object
+    sf::Text text;
+    text.setFont(font); // Set the font
+    text.setString(""); // Set the text string
+    char generation[32];
+    text.setCharacterSize(15); // Set the character size (in pixels)
+    text.setFillColor(sf::Color::White); // Set the text color
+    text.setPosition((COLS * CELLSIZE / 2), 1); // Set the position of the text
 
     // Create genome window
     sf::RenderWindow genome_window(sf::VideoMode(NEURON_WIDTH, NEURON_HEIGHT), "GENOEME");
@@ -29,26 +44,20 @@ int main() {
 
     // Create the grid of cells
     std::vector<sf::RectangleShape> grid = createGrid(ROWS, COLS, CELLSIZE);
-    // randomPoint(&grid);
 
-    float starting_points[4][2] = {{10, 10}, {ROWS-11, 10}, {10, COLS-10}, {ROWS-11, COLS-10}};
-    int dirs[4] = {0, 180, 0, 180};
-    std::vector<sf::Color> snake_colors;
-    snake_colors.push_back(sf::Color(255, 255, 0, 200));
-    snake_colors.push_back(sf::Color(0, 255, 255, 200));
-    snake_colors.push_back(sf::Color(255, 165, 0, 200));
-    snake_colors.push_back(sf::Color(0, 0, 255, 200));
-    std::vector<Snake> players;
+    std::vector<Specimen> genepool;
+    int age_counter = 0;
+    int generation_counter = 0;
+    double best_fitness = 0;
+    int max_age = MAX_AGE;
+    bool learning = true;
+    std::vector<double> fitness_list;
 
-    for (int i = 0; i < PLAYER_NUM; i++) {
-        Snake player(starting_points[i][0], starting_points[i][1], CELLSIZE, snake_colors[i], dirs[i]);
-        players.push_back(player);
+    for (int i = 0; i < MAX_GENES; i++) {
+        Specimen item(i);
+        genepool.push_back(item);
     }
-
-    players[0].generate_food();
-
-    Genome gene(0);
-    gene.populate();
+    Specimen best_specimen = genepool[0];
 
     // Start the game loop
     while (window.isOpen()) {
@@ -62,44 +71,16 @@ int main() {
                 window.close();
             }
             if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::W) {
-                    players[0].turn(0, 100);
-                }
-                else if (event.key.code == sf::Keyboard::S) {
-                    players[0].turn(0, -100);
-                }
-                else if (event.key.code == sf::Keyboard::A) {
-                    players[0].turn(-100, 0);
-                }
-                else if (event.key.code == sf::Keyboard::D) {
-                    players[0].turn(100, 0);
-                }
-                else if (event.key.code == sf::Keyboard::Q) {
-                    players[0].turn(-100);
-                }
-                else if (event.key.code == sf::Keyboard::E) {
-                    players[0].turn(100);
-                }
-                else if (event.key.code == sf::Keyboard::Space) {
-                }
-                else if (event.key.code == sf::Keyboard::Escape) {
-                    for (int i = 0; i < PLAYER_NUM; i++) {
-                        players[i].reset(starting_points[i][0], starting_points[i][1], CELLSIZE, snake_colors[i], dirs[i]);
+                if (event.key.code == sf::Keyboard::Space) {
+                    std::cout << "[";
+                    for (int i = 0; i < fitness_list.size(); i++) {
+                        std::cout << fitness_list[i] << ",";
                     }
+                    std::cout << "]";
+                    std::cout << std::endl;
                 }
-                else if (PLAYER_NUM > 2) {
-                    if (event.key.code == sf::Keyboard::Up) {
-                        players[2].turn(0, 100);
-                    }
-                    else if (event.key.code == sf::Keyboard::Down) {
-                        players[2].turn(0, -100);
-                    }
-                    else if (event.key.code == sf::Keyboard::Left) {
-                        players[2].turn(-100, 0);
-                    }
-                    else if (event.key.code == sf::Keyboard::Right) {
-                        players[2].turn(100, 0);
-                    }
+                else if (event.key.code == sf::Keyboard::Enter) {
+                    learning = !learning;
                 }
             }
         }
@@ -109,131 +90,94 @@ int main() {
             if (event.type == sf::Event::Closed) {
                 genome_window.close();
             }
-            if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::Numpad0) {
-                    gene.delete_neuron();
-                }
-                else if (event.key.code == sf::Keyboard::Numpad1) {
-                    gene.delete_link();
-                }
-                else if (event.key.code == sf::Keyboard::Numpad2) {
-                    gene.add_link();
-                    // gene.add_neuron();
-                }
-                else if (event.key.code == sf::Keyboard::Numpad3) {
-                    gene.modify_weight();
-                }
-                else if (event.key.code == sf::Keyboard::Numpad4) {
-                    gene.modify_bias();
-                }
-                else if (event.key.code == sf::Keyboard::Escape) {
-                    for (int i = 0; i < PLAYER_NUM; i++) {
-                        players[i].reset(starting_points[i][0], starting_points[i][1], CELLSIZE, snake_colors[i], dirs[i]);
-                    }
-                }
-                else if (event.key.code == sf::Keyboard::Enter) {
-                    gene.clear();
-                    gene.populate();
-                }
-            }
-        }
-
-        // Check if the joystick is connected
-        if (sf::Joystick::isConnected(0) && PLAYER_NUM > 1) { // 0 is the index of the joystick
-            // Get joystick axis values
-            float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X);
-            float y = sf::Joystick::getAxisPosition(0, sf::Joystick::Y);
-            players[1].turn(x, -y);
-
-            // Get joystick button states
-            bool buttonA = sf::Joystick::isButtonPressed(0, 0); // Button index 0
-            if (buttonA) {
-                players[1].reset(starting_points[1][0], starting_points[1][1], CELLSIZE, snake_colors[1], dirs[1]);
-            }
-        }
-
-        // Get the elapsed time
-        sf::Time elapsed = clock.getElapsedTime();
-
-        double outputs[OUTPUT_COUNT];
-        // Update snakes
-        if (elapsed > sf::milliseconds(SPEED)) {
-            clock.restart();
-
-            for (int i = 0; i < PLAYER_NUM; i++) {
-                if (!sf::Joystick::isConnected(0) && i == 1) {
-                    continue;
-                }
-                players[i].move_snake(&grid);
-                players[i].look(&grid);
-            }
-
-            if (players[0].is_alive()) {
-                // Neural
-                uint8_t inputs[INPUT_COUNT];
-                inputs[0] = players[0].good.left;
-                inputs[1] = players[0].good.forward;
-                inputs[2] = players[0].good.right;
-                inputs[3] = players[0].bad.left;
-                inputs[4] = players[0].bad.forward;
-                inputs[5] = players[0].bad.right;
-
-                double input_values[INPUT_COUNT];
-                for (int ii = 0; ii < INPUT_COUNT; ii++) {
-                    if (inputs[ii] == 255) {
-                        input_values[ii] = 1.0;
-                        continue;
-                    }
-                    input_values[ii] = ((static_cast<double>(inputs[ii]) / (ROWS / 2.0)) - 1.0);
-                }
-
-                gene.set_input(input_values);
-                gene.update_network();
-                gene.get_output(outputs);
-                gene.calculated();
-
-                int out = 0;
-                double old = 0.0;
-                for (int i = 0; i < OUTPUT_COUNT; i++) {
-                    if (outputs[i] > old) {
-                        old = outputs[i];
-                        out = i;
-                    }
-                }
-
-                if (out == 0) {
-                    players[0].turn(-100);
-                }
-                else if (out == 2) {
-                    players[0].turn(100);
-                }
-            }
-            else {
-                std::cout << players[0].get_age() << std::endl;
-                players[0].reset(starting_points[0][0], starting_points[0][1], CELLSIZE, snake_colors[0], dirs[0]);
-                // gene.clear();
-                // gene.populate();
-                gene.mutate();
-            }
         }
 
         // Clear screen
         window.clear();
         genome_window.clear(Colors::genome_background);
 
-        std::vector<sf::CircleShape> circles;
-        gene.draw_neurons(&circles);
-        std::vector<sf::VertexArray> links;
-        gene.draw_links(&links);
-        // Draw links
-        for (const auto& link : links) {
-            genome_window.draw(link);
+        // Get the elapsed time
+        sf::Time elapsed = clock.getElapsedTime();
+
+        double outputs[OUTPUT_COUNT];
+        // Update snakes
+        // if (elapsed > sf::milliseconds(SPEED)) {
+        if (learning) {
+            clock.restart();
+
+            for (int i = 0; i < genepool.size(); i++) {
+                genepool[i].update(&grid);
+            }
+
+            age_counter++;
+            // std::cout << age_counter << std::endl;
+            if (age_counter > max_age) {
+                max_age += 10;
+                // END
+                best_fitness = 0;
+                for (int i = 0; i < genepool.size(); i++) {
+                    if (genepool[i].get_fitness(max_age) > best_fitness) {
+                        best_fitness = genepool[i].get_fitness(max_age);
+                    }
+                }
+
+                int sorting = 1;
+                std::vector<Specimen> genepool_sorted;
+                while (sorting) {
+                    double last_fitness = 0;
+                    int last_index = 0;
+
+                    for (int i = 0; i < genepool.size(); i++) {
+                        if (genepool[i].get_fitness(max_age) > last_fitness) {
+                            last_fitness = genepool[i].get_fitness(max_age);
+                            last_index = i;
+                        }
+                    }
+
+                    if (genepool.size() <= 0) {
+                        break;
+                    }
+
+                    genepool_sorted.push_back(genepool[last_index]);
+
+                    std::vector<Specimen>::iterator it = genepool.begin();
+                    std::advance(it, last_index);
+                    genepool.erase(it);
+                }
+
+                genepool = genepool_sorted;
+                int keep = genepool.size() * KEEP_RATIO;
+                int remove = genepool.size() - keep;
+
+                for (int i = 0; i < remove; i++) {
+                    genepool.pop_back();
+                }
+
+                for (int i = 0; i < keep; i++) {
+                    genepool[i].clear();
+                    for (int ii = 0; ii < (remove / keep); ii++) {
+                        Specimen item(keep * ii);
+
+                        if (i < keep-1) {
+                            item = genepool[i];
+                        }
+
+                        item.clear();
+                        item.mutate();
+                        genepool.push_back(item);
+                    }
+                }
+
+                age_counter = 0;
+                generation_counter++;
+                fitness_list.push_back(best_fitness);
+            }
         }
-        // Draw Neurons
-        for (const auto& circle : circles) {
-            genome_window.draw(circle);
+        else {
+            genepool[0].update(&grid);
         }
         
+        genepool[0].draw_specimen(&genome_window);
 
         // Draw the grid
         drawParameter(&grid, ROWS, COLS);
@@ -241,13 +185,18 @@ int main() {
             window.draw(cell);
         }
 
-        // Draw snake
-        for (int i = 0; i < PLAYER_NUM; i++) {
-            if (!sf::Joystick::isConnected(0) && i == 1) {
-                continue;
+        if (learning) {
+            for (int i = 0; i < genepool.size(); i++) {
+                genepool[i].draw_snake(&window);
             }
-            players[i].draw_snake(&window);
         }
+        else {
+            genepool[0].draw_snake(&window);
+        }
+
+        sprintf(generation, "%f - %d - %d", best_fitness, generation_counter, age_counter);
+        text.setString(generation);
+        window.draw(text);
 
         // Update the window
         window.display();
@@ -259,6 +208,5 @@ int main() {
             sf::sleep(sleepTime);
         }
     }
-
     return EXIT_SUCCESS;
 }

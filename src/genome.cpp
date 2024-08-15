@@ -1,11 +1,13 @@
 #include "genome.hpp"
-#include "link.hpp"
 #include "random.hpp"
 #include "colors.hpp"
 #include <algorithm>
 #include <iostream>
 
 
+
+Genome::Genome() {
+}
 
 Genome::Genome(int id) {
     this->id = id;
@@ -383,7 +385,7 @@ void Genome::add_link() {
 }
 
 void Genome::mutate() {
-    int random = (get_neural_rng() * 2) + 1;
+    int random = (get_neural_rng()) + 1;
     for (int i = 0; i < random; i++) {
         int random_effect = (get_neural_rng() * 5);
 

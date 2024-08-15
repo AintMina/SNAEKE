@@ -17,7 +17,7 @@ class Snake {
 private:
     /* data */
     sf::RectangleShape head;
-    uint8_t head_coords[2];
+    uint8_t head_coords[2] = {10, 10};
     int dir = 0;
     std::vector<sf::RectangleShape> body;
     uint16_t length = 3;
@@ -29,14 +29,18 @@ private:
     sf::Color color;
     int food[2] = {0, 0};
     int age = 0;
+    int id = 0;
 
 public:
     struct Vision good;
     struct Vision bad;
 
-    Snake(float x, float y, float cell_size, sf::Color color, int dir);
+    Snake();
+    Snake(int id);
+    Snake(float x, float y, sf::Color color, int dir);
 
-    void reset(float x, float y, float cell_size, sf::Color color, int dir);
+    void reset();
+    void reset(float x, float y, int dir);
     int move_snake(std::vector<sf::RectangleShape> *grid);
     void draw_snake(sf::RenderWindow *window);
     void draw_food(sf::RenderWindow *window);
@@ -48,5 +52,6 @@ public:
     uint8_t is_alive();
     void generate_food();
     int get_age();
+    int get_length();
 
 };

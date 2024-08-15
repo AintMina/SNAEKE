@@ -5,9 +5,85 @@
 #include "random.hpp"
 
 
-Snake::Snake(float x, float y, float cell_size, sf::Color color, int dir) {
+Snake::Snake() {
+    this->cell_size = CELLSIZE;
+    sf::RectangleShape start_segment(sf::Vector2f(cell_size, cell_size));
+    this->color = sf::Color((get_neural_rng()*255), (get_neural_rng()*255), (get_neural_rng()*255), TRANSPARENCY);
+    start_segment.setFillColor(this->color);
+    start_segment.setPosition(this->head_coords[0]*cell_size, this->head_coords[1]*cell_size);
+
+    this->head = start_segment;
+    this->body.push_back(start_segment);
+
+    sf::Vector2f offset(0, 0);
+
+    if (this->dir == 0) {
+        offset.x -= this->cell_size;
+    }
+    else if (this->dir == 180) {
+        offset.x += this->cell_size;
+    }
+    else if (this->dir == 90) {
+        offset.y -= this->cell_size;
+    }
+    else if (this->dir == 270) {
+        offset.y += this->cell_size;
+    }
+
+    sf::RectangleShape body_segment(sf::Vector2f(cell_size, cell_size));
+    body_segment.setFillColor(this->color);
+    
+    for (int i = 0; i < this->length; i++) {
+        body_segment.setPosition((this->head_coords[0]*cell_size) + (offset.x * (i+1)), (this->head_coords[1]*cell_size) + (offset.y * (i+1)));
+        this->body.push_back(body_segment);
+    }
+
+    this->generate_food();
+
+}
+
+
+Snake::Snake(int id) {
+    this->id = id;
+    this->cell_size = CELLSIZE;
+    sf::RectangleShape start_segment(sf::Vector2f(cell_size, cell_size));
+    this->color = sf::Color((get_neural_rng()*255), (get_neural_rng()*255), (get_neural_rng()*255), TRANSPARENCY);
+    start_segment.setFillColor(this->color);
+    start_segment.setPosition(this->head_coords[0]*cell_size, this->head_coords[1]*cell_size);
+
+    this->head = start_segment;
+    this->body.push_back(start_segment);
+
+    sf::Vector2f offset(0, 0);
+
+    if (this->dir == 0) {
+        offset.x -= this->cell_size;
+    }
+    else if (this->dir == 180) {
+        offset.x += this->cell_size;
+    }
+    else if (this->dir == 90) {
+        offset.y -= this->cell_size;
+    }
+    else if (this->dir == 270) {
+        offset.y += this->cell_size;
+    }
+
+    sf::RectangleShape body_segment(sf::Vector2f(cell_size, cell_size));
+    body_segment.setFillColor(this->color);
+    
+    for (int i = 0; i < this->length; i++) {
+        body_segment.setPosition((this->head_coords[0]*cell_size) + (offset.x * (i+1)), (this->head_coords[1]*cell_size) + (offset.y * (i+1)));
+        this->body.push_back(body_segment);
+    }
+
+    this->generate_food();
+
+}
+
+Snake::Snake(float x, float y, sf::Color color, int dir) {
     this->color = color;
-    this->cell_size = cell_size;
+    this->cell_size = CELLSIZE;
     this->head_coords[0] = x;
     this->head_coords[1] = y;
     this->dir = dir;
@@ -41,15 +117,60 @@ Snake::Snake(float x, float y, float cell_size, sf::Color color, int dir) {
         this->body.push_back(body_segment);
     }
 
+    this->generate_food();
+
 }
 
-void Snake::reset(float x, float y, float cell_size, sf::Color color, int dir) {
+void Snake::reset() {
     this->body.clear();
     this->length = 3;
     this->alive = 1;
     this->age = 0;
     this->color = color;
-    this->cell_size = cell_size;
+    this->cell_size = CELLSIZE;
+    this->head_coords[0] = 10;
+    this->head_coords[1] = 10;
+    this->dir = dir;
+    this->color.a = TRANSPARENCY;
+    sf::RectangleShape start_segment(sf::Vector2f(cell_size, cell_size));
+    start_segment.setFillColor(this->color);
+    start_segment.setPosition(10*cell_size, 10*cell_size);
+    this->generate_food();
+
+    this->head = start_segment;
+    this->body.push_back(start_segment);
+
+    sf::Vector2f offset(0, 0);
+
+    if (this->dir == 0) {
+        offset.x -= this->cell_size;
+    }
+    else if (this->dir == 180) {
+        offset.x += this->cell_size;
+    }
+    else if (this->dir == 90) {
+        offset.y -= this->cell_size;
+    }
+    else if (this->dir == 270) {
+        offset.y += this->cell_size;
+    }
+
+    sf::RectangleShape body_segment(sf::Vector2f(cell_size, cell_size));
+    body_segment.setFillColor(this->color);
+    
+    for (int i = 0; i < this->length; i++) {
+        body_segment.setPosition((10*cell_size) + (offset.x * (i+1)), (10*cell_size) + (offset.y * (i+1)));
+        this->body.push_back(body_segment);
+    }
+}
+
+void Snake::reset(float x, float y, int dir) {
+    this->body.clear();
+    this->length = 3;
+    this->alive = 1;
+    this->age = 0;
+    this->color = color;
+    this->cell_size = CELLSIZE;
     this->head_coords[0] = x;
     this->head_coords[1] = y;
     this->dir = dir;
@@ -117,7 +238,7 @@ int Snake::move_snake(std::vector<sf::RectangleShape> *grid) {
 
     if (next_cell == Colors::border) {
         this->alive = 0;
-        this->color.a = 120;
+        this->color.a = 30;
         return -1;
     }
     else if (this->head_coords[0] + coord_offset[0] == this->food[0] && this->head_coords[1] + coord_offset[1] == this->food[1]) {
@@ -130,7 +251,7 @@ int Snake::move_snake(std::vector<sf::RectangleShape> *grid) {
         if (this->head.getPosition().x + offset.x == this->body[i].getPosition().x) {
             if (this->head.getPosition().y + offset.y == this->body[i].getPosition().y) {
                 this->alive = 0;
-                this->color.a = 120;
+                this->color.a = 30;
                 return -1;
             }
         }
@@ -170,7 +291,7 @@ void Snake::draw_snake(sf::RenderWindow *window) {
 void Snake::draw_food(sf::RenderWindow *window) {
     sf::RectangleShape food(sf::Vector2f(this->cell_size, this->cell_size));
     food.setPosition(this->food[0] * this->cell_size, this->food[1] * this->cell_size);
-    food.setFillColor(Colors::food); // Default color
+    food.setFillColor(this->color); // Default color
     window->draw(food);
 }
 
@@ -420,4 +541,8 @@ void Snake::generate_food() {
 
 int Snake::get_age() {
     return this->age;
+}
+
+int Snake::get_length() {
+    return this->length;
 }

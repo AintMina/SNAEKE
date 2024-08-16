@@ -112,7 +112,7 @@ int main() {
             age_counter++;
             // std::cout << age_counter << std::endl;
             if (age_counter > max_age) {
-                max_age += 10;
+                max_age += MAX_AGE_VEL;
                 // END
                 best_fitness = 0;
                 for (int i = 0; i < genepool.size(); i++) {

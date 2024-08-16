@@ -81,7 +81,13 @@ void Specimen::calculate_fitness(int max_age) {
     double food = this->snake.get_length() - 3;
     double time = this->snake.get_age();
 
-    double temp = (time / max_age);
+    double temp = 0;
+    if (time <= max_age) {
+        temp = (time / max_age);
+    }
+    else {
+        temp = 1;
+    }
     double value = food * temp;
     this->fitness = value;
     this->calculated = true;

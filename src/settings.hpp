@@ -12,6 +12,7 @@
 
 #define FPS 60.0f
 #define MAX_AGE 200
+#define MAX_AGE_VEL 5
 #define MAX_GENES 50
 #define KEEP_RATIO 0.2f
 #define TRANSPARENCY 100

@@ -1,11 +1,25 @@
 #include "specimen.hpp"
+#include "random.hpp"
 
 
+
+Specimen::Specimen() {
+    this->id = 0;
+    this->snake = Snake(id);
+    this->snake.generate_food();
+}
 
 Specimen::Specimen(int id) {
     this->id = id;
     this->gene = Genome(id);
     this->gene.populate();
+    this->snake = Snake(id);
+    this->snake.generate_food();
+}
+
+Specimen::Specimen(Genome gene, int id) {
+    this->id = id;
+    this->gene = gene;
     this->snake = Snake(id);
     this->snake.generate_food();
 }
@@ -32,11 +46,16 @@ void Specimen::update(std::vector<sf::RectangleShape> *grid) {
         double outputs[OUTPUT_COUNT];
         uint8_t inputs[INPUT_COUNT];
         inputs[0] = this->snake.good.left;
-        inputs[1] = this->snake.good.forward;
-        inputs[2] = this->snake.good.right;
-        inputs[3] = this->snake.bad.left;
-        inputs[4] = this->snake.bad.forward;
-        inputs[5] = this->snake.bad.right;
+        inputs[1] = this->snake.good.forward_left;
+        inputs[2] = this->snake.good.forward;
+        inputs[3] = this->snake.good.forward_right;
+        inputs[4] = this->snake.good.right;
+        inputs[5] = this->snake.bad.left;
+        inputs[6] = this->snake.bad.forward_left;
+        inputs[7] = this->snake.bad.forward;
+        inputs[8] = this->snake.bad.forward_right;
+        inputs[9] = this->snake.bad.right;
+        // inputs[10] = this->snake.get_length();
 
         double input_values[INPUT_COUNT];
         for (int ii = 0; ii < INPUT_COUNT; ii++) {
@@ -75,6 +94,35 @@ void Specimen::update(std::vector<sf::RectangleShape> *grid) {
 
 void Specimen::mutate() {
     this->gene.mutate();
+
+    // Mutate snake color
+    int random_effect = (get_neural_rng() * 32);
+    int random_value = (get_food_rng() * 2) - 1;
+    sf::Color color = this->snake.get_color();
+
+
+    // Introduce a slight bias
+    if (color.r + color.g + color.b < 384) {
+        random_value = abs(random_value); // Bias towards increasing color value
+    } else {
+        random_value = -abs(random_value); // Bias towards decreasing color value
+    }
+
+    switch (random_effect) {
+        case 0:
+            color.r = std::clamp(color.r + random_value, 0, 255);
+            break;
+        case 1:
+            color.g = std::clamp(color.g + random_value, 0, 255);
+            break;
+        case 2:
+            color.b = std::clamp(color.b + random_value, 0, 255);
+            break;
+        default:
+            break;
+    }
+
+    this->snake.set_color(color);
 }
 
 void Specimen::calculate_fitness(int max_age) {
@@ -88,7 +136,11 @@ void Specimen::calculate_fitness(int max_age) {
     else {
         temp = 1;
     }
-    double value = food * temp;
+
+    double value = food;// * temp;
+    if (!food) {
+        value = 0.01;// * temp;
+    }
     this->fitness = value;
     this->calculated = true;
     this->age++;
@@ -122,4 +174,8 @@ void Specimen::draw_specimen(sf::RenderWindow *genome_window) {
 
 void Specimen::draw_snake(sf::RenderWindow *window) {
     this->snake.draw_snake(window);
+}
+
+int Specimen::is_alive() {
+    return this->snake.is_alive();
 }

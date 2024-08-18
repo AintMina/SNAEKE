@@ -1,13 +1,26 @@
 #include "link.hpp"
 #include "neuron.hpp"
 #include "genome.hpp"
+#include "settings.hpp"
 
 
-bool compare_by_layer(Neuron &a, Neuron &b);
-
+Link::Link() {
+    this->enabled = true;
+    this->calculated = 0;
+}
 
 Link::Link(int in, int out, double weigth) {
     this->id = (in * (MAX_HIDDEN_LAYERS * MAX_HIDDEN_NODES)) + out;
+    this->in_id = in;
+    this->out_id = out;
+    this->weigth = weigth;
+    this->enabled = true;
+    this->calculated = 0;
+}
+
+
+Link::Link(int id, int in, int out, double weigth) {
+    this->id = id;
     this->in_id = in;
     this->out_id = out;
     this->weigth = weigth;
@@ -88,11 +101,4 @@ double Link::get_value(std::vector<Link> links, std::vector<Neuron> neurons) {
     }
 
     return this->value;
-}
-
-
-
-// Define the comparison function
-bool compare_by_layer(Neuron &a, Neuron &b) {
-    return a.get_layer() < b.get_layer();
 }

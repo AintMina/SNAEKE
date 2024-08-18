@@ -328,6 +328,10 @@ void Genome::add_links(int index) {
         }
     }
 
+    if (items_out.size() == 0) {
+        return;
+    }
+
     int random = get_neural_rng() * items.size()-1;
     int in_id = this->neurons[items[random]].get_id();
     int out_id = this->neurons[index].get_id();
@@ -339,9 +343,11 @@ void Genome::add_links(int index) {
     this->links.push_back(link);
 
     // Output link
-    random = get_neural_rng() * items_out.size()-1;
+    random = get_neural_rng() * items_out.size();
+    random = std::clamp(random, 0, static_cast<int>(items_out.size()-1));
+    int out_item = std::clamp(items_out[random], 0, static_cast<int>(neurons.size()-1));
     in_id = this->neurons[index].get_id();
-    out_id = this->neurons[items_out[random]].get_id();
+    out_id = this->neurons[out_item].get_id();
     random_value = (get_neural_rng() * 2) - 1.0;
 
     Link link_out(in_id, out_id, random_value);
@@ -387,7 +393,14 @@ void Genome::add_link() {
 void Genome::mutate() {
     int random = (get_neural_rng()) + 1;
     for (int i = 0; i < random; i++) {
-        int random_effect = (get_neural_rng() * 5);
+        int random_effect = (get_neural_rng() * 6);
+
+        if (this->neurons.size() > 20) {
+            random_effect /= 2;
+        }
+        else if (this->neurons.size() <= OUTPUT_COUNT + INPUT_COUNT + 1) {
+            random_effect = 4;
+        }
 
         switch (random_effect) {
             case 0:
@@ -411,7 +424,7 @@ void Genome::mutate() {
 
             default:
                 break;
-            }
+        }
     }
 }
 
@@ -419,7 +432,10 @@ void Genome::draw_neurons(std::vector<sf::CircleShape> *circles) {
     for (int neuron = 0; neuron < this->neurons.size(); neuron++) {
         sf::CircleShape circle(NEURON_RADIUS);
         double value = (this->neurons[neuron].value + 1) / 2;
-        int color = value * 255;
+        if (value <= 1) {
+            value *= 255;
+        }
+        int color = value;
         circle.setFillColor(sf::Color(255-color, color, 0, 255));
         circle.setOutlineColor(Colors::node_out_color);
         circle.setOutlineThickness(3);

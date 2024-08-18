@@ -5,6 +5,12 @@
 #include <random>
 
 
+#include <cereal/archives/binary.hpp>
+#include <cereal/archives/xml.hpp>
+#include <cereal/types/vector.hpp>
+#include <fstream>
+
+
 #include "gfx.hpp"
 #include "colors.hpp"
 #include "snake.hpp"
@@ -14,6 +20,91 @@
 #include "neuron.hpp"
 #include "genome.hpp"
 #include "specimen.hpp"
+
+
+// Function to plot the graph
+void plot_graph(sf::RenderWindow* window, const std::vector<double>* data) {
+    // Margin around the graph
+    float margin = 50.0f;
+    window->clear();
+    
+    // Scaling factors to fit the data within the window
+    float xScale = (window->getSize().x - 2 * margin) / (data->size() - 1);
+    double yMax = *std::max_element(data->begin(), data->end());
+    float yScale = (window->getSize().y - 2 * margin) / yMax;
+
+    // Draw the border (offset with margin)
+    sf::RectangleShape border(sf::Vector2f(window->getSize().x - 2 * margin, window->getSize().y - 2 * margin));
+    border.setPosition(margin, margin);
+    border.setFillColor(sf::Color::Transparent);
+    border.setOutlineThickness(2);
+    border.setOutlineColor(sf::Color(100, 100, 100));
+    window->draw(border);
+
+    // Draw grid lines (y-axis)
+    for (int i = 0; i <= 10; ++i) {
+        float y = margin + i * ((window->getSize().y - 2 * margin) / 10.0f);
+        sf::Vertex line[] = {
+            sf::Vertex(sf::Vector2f(margin, y), sf::Color(100, 100, 100)),
+            sf::Vertex(sf::Vector2f(window->getSize().x - margin, y), sf::Color(100, 100, 100))
+        };
+        window->draw(line, 2, sf::Lines);
+    }
+
+    // Draw grid lines (x-axis)
+    for (int i = 0; i <= 10; ++i) {
+        float x = margin + i * ((window->getSize().x - 2 * margin) / 10.0f);
+        sf::Vertex line[] = {
+            sf::Vertex(sf::Vector2f(x, margin), sf::Color(100, 100, 100)),
+            sf::Vertex(sf::Vector2f(x, window->getSize().y - margin), sf::Color(100, 100, 100))
+        };
+        window->draw(line, 2, sf::Lines);
+    }
+
+    // Create a vertex array to store the points
+    sf::VertexArray lines(sf::LinesStrip, data->size());
+
+    for (std::size_t i = 0; i < data->size(); ++i) {
+        float x = margin + i * xScale;
+        float y = window->getSize().y - margin - static_cast<float>((*data)[i]) * yScale;
+        lines[i].position = sf::Vector2f(x, y);
+        lines[i].color = sf::Color::Cyan;
+    }
+
+    // Draw the graph
+    window->draw(lines);
+
+    // Load font for axis labels
+    sf::Font font;
+    if (!font.loadFromFile("/usr/share/fonts/TTF/Hack-Bold.ttf")) {
+        std::cerr << "Error loading font\n";
+    }
+
+    // Draw y-axis labels
+    for (int i = 0; i <= 10; ++i) {
+        sf::Text text;
+        text.setFont(font);
+        text.setCharacterSize(12);
+        text.setFillColor(sf::Color::White);
+        double value = yMax * (1.0f - i / 10.0f);
+        text.setString(std::to_string(static_cast<int>(value)));
+        text.setPosition(margin - 40, margin + i * ((window->getSize().y - 2 * margin) / 10.0f) - 10);
+        window->draw(text);
+    }
+
+    // Draw x-axis labels
+    for (int i = 0; i <= 10; ++i) {
+        sf::Text text;
+        text.setFont(font);
+        text.setCharacterSize(12);
+        text.setFillColor(sf::Color::White);
+        int index = i * (data->size() - 1) / 10;
+        text.setString(std::to_string(index));
+        text.setPosition(margin + i * ((window->getSize().x - 2 * margin) / 10.0f) - 10, window->getSize().y - margin + 10);
+        window->draw(text);
+    }
+    window->display();
+}
 
 int main() {
     
@@ -34,13 +125,18 @@ int main() {
     // Create genome window
     sf::RenderWindow genome_window(sf::VideoMode(NEURON_WIDTH, NEURON_HEIGHT), "GENOEME");
 
+    // Create graph window
+    sf::RenderWindow graph_window(sf::VideoMode(GRAPH_WIDTH, GRAPH_HEIGHT), "GRAEPH");
+    graph_window.clear();
+    graph_window.display();
+
     // Create the main window
     sf::RenderWindow window(sf::VideoMode(COLS * CELLSIZE, ROWS * CELLSIZE), "SNAEKE");
     sf::Clock clock; // Create a clock to measure time
     sf::Clock frameClock; // Clock to measure frame time
     sf::Image icon;
-    icon.loadFromFile("icon.png"); // File/Image/Pixel
-    window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
+    // icon.loadFromFile("icon.png"); // File/Image/Pixel
+    // window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
 
     // Create the grid of cells
     std::vector<sf::RectangleShape> grid = createGrid(ROWS, COLS, CELLSIZE);
@@ -81,6 +177,42 @@ int main() {
                 }
                 else if (event.key.code == sf::Keyboard::Enter) {
                     learning = !learning;
+
+                    age_counter = 0;
+
+                    if (learning) {
+                        for (int i = 0; i < genepool.size(); i++) {
+                            genepool[i].clear();
+                        }
+                    }
+                }
+                else if (event.key.code == sf::Keyboard::Escape) {
+                    for (int i = 0; i < genepool.size(); i++) {
+                        genepool[i].clear();
+                    }
+                    age_counter = 0;
+                }
+                else if (event.key.code == sf::Keyboard::Numpad1) {
+                    std::ofstream os("out.xml");
+                    if (os.is_open()) {
+                        cereal::XMLOutputArchive archive(os);
+                        archive(genepool[0]);
+                    }
+                }
+                else if (event.key.code == sf::Keyboard::Numpad2) {
+                    std::ifstream os("out.xml");
+                    if (os.is_open()) {
+                        cereal::XMLInputArchive archive(os);
+                        Specimen spec;
+                        archive(spec);
+
+                        for (int i = 0; i < genepool.size(); i++) {
+                            genepool[i] = spec;
+                            genepool[i].clear();
+                        }
+                    }
+
+                    age_counter = 0;
                 }
             }
         }
@@ -89,6 +221,37 @@ int main() {
             // Close window : exit
             if (event.type == sf::Event::Closed) {
                 genome_window.close();
+            }
+            if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code == sf::Keyboard::Numpad1) {
+                    std::ofstream os("out.xml");
+                    if (os.is_open()) {
+                        cereal::XMLOutputArchive archive(os);
+                        archive(genepool[0]);
+                    }
+                }
+                else if (event.key.code == sf::Keyboard::Numpad2) {
+                    std::ifstream os("out.xml");
+                    if (os.is_open()) {
+                        cereal::XMLInputArchive archive(os);
+                        Specimen spec;
+                        archive(spec);
+
+                        for (int i = 0; i < genepool.size(); i++) {
+                            genepool[i] = spec;
+                            genepool[i].clear();
+                        }
+                    }
+
+                    age_counter = 0;
+                }
+            }
+        }
+
+        while (graph_window.pollEvent(event)) {
+            // Close window : exit
+            if (event.type == sf::Event::Closed) {
+                graph_window.close();
             }
         }
 
@@ -105,14 +268,23 @@ int main() {
         if (learning) {
             clock.restart();
 
+            int all_dead = 0;
             for (int i = 0; i < genepool.size(); i++) {
                 genepool[i].update(&grid);
+                if (!genepool[i].is_alive() && all_dead == 0) {
+                    all_dead = 0;
+                }
+                else {
+                    all_dead = 1;
+                }
+            }
+
+            if (!all_dead) {
+                age_counter = max_age;
             }
 
             age_counter++;
-            // std::cout << age_counter << std::endl;
             if (age_counter > max_age) {
-                max_age += MAX_AGE_VEL;
                 // END
                 best_fitness = 0;
                 for (int i = 0; i < genepool.size(); i++) {
@@ -121,6 +293,8 @@ int main() {
                     }
                 }
 
+
+                // Sort by fitness
                 int sorting = 1;
                 std::vector<Specimen> genepool_sorted;
                 while (sorting) {
@@ -147,18 +321,26 @@ int main() {
 
                 genepool = genepool_sorted;
                 int keep = genepool.size() * KEEP_RATIO;
-                int remove = genepool.size() - keep;
+                int size = genepool.size();
 
+                // If min genes, then keep more
+                if (size <= MIN_GENES) {
+                    keep = genepool.size() * 0.5;
+                }
+
+                // Purge
+                int remove = genepool.size() - keep;
                 for (int i = 0; i < remove; i++) {
                     genepool.pop_back();
                 }
 
+                // Duplicate and add
                 for (int i = 0; i < keep; i++) {
                     genepool[i].clear();
                     for (int ii = 0; ii < (remove / keep); ii++) {
                         Specimen item(keep * ii);
 
-                        if (i < keep-1) {
+                        if (i < keep-1 || size <= MIN_GENES || genepool[i].get_fitness(max_age) > 0.01) {
                             item = genepool[i];
                         }
 
@@ -168,15 +350,35 @@ int main() {
                     }
                 }
 
+                // Remove genes every 10th gen
+                if (generation_counter % 10 == 0 && generation_counter > 0 && size > MIN_GENES) {
+                    for (int i = 0; i < 5; i++) {
+                        genepool.pop_back();
+                    }
+                }
+
+                // Increment max age
+                if (max_age >= MAX_MAX_AGE) {
+
+                }
+                else if (size > 20) {
+                    max_age += MAX_AGE_VEL;
+                }
+                else {
+                    max_age += MAX_AGE_VEL * 4;
+                }
+
                 age_counter = 0;
                 generation_counter++;
                 fitness_list.push_back(best_fitness);
+                plot_graph(&graph_window, &fitness_list);
             }
         }
         else {
             genepool[0].update(&grid);
         }
         
+        // Draw the last best specimen genome
         genepool[0].draw_specimen(&genome_window);
 
         // Draw the grid
@@ -185,6 +387,7 @@ int main() {
             window.draw(cell);
         }
 
+        // Draw snakes
         if (learning) {
             for (int i = 0; i < genepool.size(); i++) {
                 genepool[i].draw_snake(&window);
@@ -194,7 +397,8 @@ int main() {
             genepool[0].draw_snake(&window);
         }
 
-        sprintf(generation, "%f - %d - %d", best_fitness, generation_counter, age_counter);
+        // Display info
+        sprintf(generation, "%f - %d - %d - %d", best_fitness, generation_counter, age_counter, genepool.size());
         text.setString(generation);
         window.draw(text);
 
@@ -202,10 +406,12 @@ int main() {
         window.display();
         genome_window.display();
 
-        // Calculate time to sleep to cap FPS
-        sf::Time sleepTime = sf::seconds(1.0f / FPS) - frameTime;
-        if (sleepTime > sf::Time::Zero) {
-            sf::sleep(sleepTime);
+        if (!learning) {
+            // Calculate time to sleep to cap FPS
+            sf::Time sleepTime = sf::seconds(1.0f / FPS) - frameTime;
+            if (sleepTime > sf::Time::Zero) {
+                sf::sleep(sleepTime);
+            }
         }
     }
     return EXIT_SUCCESS;

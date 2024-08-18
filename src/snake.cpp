@@ -345,10 +345,14 @@ sf::Color Snake::get_next_cell(std::vector<sf::RectangleShape> *grid, int offset
 void Snake::look(std::vector<sf::RectangleShape> *grid) {
     
     this->bad.forward = 0;
+    this->bad.forward_left = 0;
     this->bad.left = 0;
+    this->bad.forward_right = 0;
     this->bad.right = 0;
     this->good.forward = 0;
+    this->good.forward_left = 0;
     this->good.left = 0;
+    this->good.forward_right = 0;
     this->good.right = 0;
 
     uint8_t found_good = 0;
@@ -412,6 +416,68 @@ void Snake::look(std::vector<sf::RectangleShape> *grid) {
     found_good = 0;
     found_bad = 0;
 
+    // Forward left
+    for (int i = 1; i <= COLS; i++) {
+
+        uint8_t x = 0;
+        uint8_t y = 0;
+
+        if (this->dir == 0) {
+            x += i;
+            y += i;
+        }
+        else if (this->dir == 90) {
+            x -= i;
+            y += i;
+        }
+        else if (this->dir == 180) {
+            y -= i;
+            x -= i;
+        }
+        else if (this->dir == 270) {
+            x += i;
+            y -= i;
+        }
+
+        x += this->head_coords[0];
+        y += this->head_coords[1];
+
+        for (int ii = 0; ii < this->length; ii++) {
+            if (this->body[ii].getPosition().x == (x * this->cell_size) && this->body[ii].getPosition().y == (y * this->cell_size)) {
+                found_bad = 1;
+                break;
+            }
+        }
+
+        sf::Color color = (*grid)[x + (y * COLS)].getFillColor();
+
+        if (x == this->food[0] && y == this->food[1]) {
+            found_good = 1;
+        }
+        else if (color == Colors::border) {
+            found_bad = 1;
+        }
+        if (color == Colors::background) {
+            if (!found_bad) {
+                this->bad.forward_left++;
+            }
+            if (!found_good) {
+                this->good.forward_left++;
+            }
+        }
+
+        if (found_bad && !found_good) {
+            this->good.forward_left = 255;
+            break;
+        }
+        else if (!found_bad && found_good) {
+            this->bad.forward_left = 255;
+            break;
+        }
+    }
+    found_good = 0;
+    found_bad = 0;
+
     // Left
     for (int i = 1; i <= COLS; i++) {
 
@@ -464,6 +530,68 @@ void Snake::look(std::vector<sf::RectangleShape> *grid) {
         }
         else if (!found_bad && found_good) {
             this->bad.left = 255;
+            break;
+        }
+    }
+    found_good = 0;
+    found_bad = 0;
+
+    // Forward right
+    for (int i = 1; i <= COLS; i++) {
+
+        uint8_t x = 0;
+        uint8_t y = 0;
+
+        if (this->dir == 0) {
+            x += i;
+            y -= i;
+        }
+        else if (this->dir == 90) {
+            x += i;
+            y += i;
+        }
+        else if (this->dir == 180) {
+            y += i;
+            x -= i;
+        }
+        else if (this->dir == 270) {
+            x -= i;
+            y -= i;
+        }
+
+        x += this->head_coords[0];
+        y += this->head_coords[1];
+
+        for (int ii = 0; ii < this->length; ii++) {
+            if (this->body[ii].getPosition().x == (x * this->cell_size) && this->body[ii].getPosition().y == (y * this->cell_size)) {
+                found_bad = 1;
+                break;
+            }
+        }
+
+        sf::Color color = (*grid)[x + (y * COLS)].getFillColor();
+
+        if (x == this->food[0] && y == this->food[1]) {
+            found_good = 1;
+        }
+        else if (color == Colors::border) {
+            found_bad = 1;
+        }
+        if (color == Colors::background) {
+            if (!found_bad) {
+                this->bad.forward_right++;
+            }
+            if (!found_good) {
+                this->good.forward_right++;
+            }
+        }
+
+        if (found_bad && !found_good) {
+            this->good.forward_right = 255;
+            break;
+        }
+        else if (!found_bad && found_good) {
+            this->bad.forward_right = 255;
             break;
         }
     }
@@ -545,4 +673,12 @@ int Snake::get_age() {
 
 int Snake::get_length() {
     return this->length;
+}
+
+sf::Color Snake::get_color() {
+    return this->color;
+}
+
+void Snake::set_color(sf::Color color) {
+    this->color = color;
 }

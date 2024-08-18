@@ -1,9 +1,15 @@
 #include "neuron.hpp"
 #include "link.hpp"
 #include "genome.hpp"
+#include "settings.hpp"
 #include <iostream>
 #include <cmath>
 
+
+Neuron::Neuron() {
+    this->in_count = 0;
+    this->out_count = 0;
+}
 
 Neuron::Neuron(int id, double bias) {
     this->id = id;
@@ -17,7 +23,10 @@ Neuron::Neuron(int id, double bias) {
     }
 
     this->layer = layer;
+    this->in_count = 0;
+    this->out_count = 0;
 }
+
 Neuron::Neuron(int id, const std::vector<int>& in, const std::vector<int>& out, double bias) {
     this->id = id;
     this->bias = bias;
@@ -36,6 +45,25 @@ Neuron::Neuron(int id, const std::vector<int>& in, const std::vector<int>& out, 
         id_tmp -= MAX_HIDDEN_NODES;
         layer++;
     }
+
+    this->layer = layer;
+}
+
+Neuron::Neuron(int id, double bias, const std::vector<int>& in, int in_count, const std::vector<int>& out, int out_count, const std::array<int, 2>& position, int layer) {
+    this->id = id;
+    this->bias = bias;
+    this->in = in;
+    this->in_count = in_count;
+    this->out = out;
+    this->out_count = out_count;
+    this->position = position;
+
+    // int id_tmp = id;
+    // int layer = 0;
+    // while (id_tmp >= MAX_HIDDEN_NODES) {
+    //     id_tmp -= MAX_HIDDEN_NODES;
+    //     layer++;
+    // }
 
     this->layer = layer;
 }

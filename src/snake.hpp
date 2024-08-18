@@ -4,11 +4,15 @@
 #include <cstdint>
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <cereal/types/vector.hpp>
+#include <cereal/archives/binary.hpp>
 
 
 struct Vision {
     uint8_t forward;
+    uint8_t forward_left;
     uint8_t left;
+    uint8_t forward_right;
     uint8_t right;
 };
 
@@ -53,5 +57,7 @@ public:
     void generate_food();
     int get_age();
     int get_length();
+    sf::Color get_color();
+    void set_color(sf::Color color);
 
 };

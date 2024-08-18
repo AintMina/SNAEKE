@@ -3,6 +3,8 @@
 
 
 #include <vector>
+#include <cereal/archives/binary.hpp>
+#include <cereal/archives/xml.hpp>
 
 class Neuron;
 
@@ -19,7 +21,9 @@ public:
     double value = 0.0;
     bool calculated = false;
     
+    Link();
     Link(int in, int out, double weigth);
+    Link(int id, int in_id, int out_id, double weigth);
 
     void enable();
     void disable();
@@ -36,5 +40,10 @@ public:
 
     void calculate_value(std::vector<Link> links, std::vector<Neuron> neurons);
     double get_value(std::vector<Link> links, std::vector<Neuron> neurons);
+
+    template<class Archive>
+    void serialize(Archive& archive) {
+        archive(id, in_id, out_id, weigth);
+    }
 
 };
